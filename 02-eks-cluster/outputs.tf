@@ -39,3 +39,8 @@ output "karpenter_node_role_name" {
   description = "Name of the IAM role used by Karpenter for node provisioning"
   value       = aws_iam_role.eks_stack_node_group_role.name
 }
+
+output "eks_cluster_certificate_authority_data" {
+  description = "Certificate authority data of the EKS cluster"
+  value       = aws_eks_cluster.this.certificate_authority[0].data
+}
