@@ -20,3 +20,8 @@ resource "aws_eks_node_group" "this" {
     aws_iam_role_policy_attachment.eks_stack_node_group_role-AmazonEC2ContainerRegistryReadOnly,
   ]
 }
+
+resource "aws_iam_instance_profile" "eks_stack_node_group" {
+  name = var.eks_cluster.node_group.name
+  role = aws_iam_role.eks_stack_node_group_role.name
+}

@@ -6,6 +6,12 @@ resource "aws_subnet" "privates" {
   availability_zone       = var.vpc.private_subnets[count.index].availability_zone
   map_public_ip_on_launch = var.vpc.private_subnets[count.index].map_public_ip_on_launch
 
-  tags       = merge({ Name = "${var.vpc.name}-${var.vpc.private_subnets[count.index].name}" }, var.tags)
+  tags = merge(
+    {
+      Name                     = "${var.vpc.name}-${var.vpc.private_subnets[count.index].name}"
+      "karpenter.sh/discovery" = var.eks_cluster_name
+    },
+    var.tags
+  )
   depends_on = [aws_vpc.this]
-}   
+}

@@ -9,7 +9,7 @@ terraform {
     bucket         = "tfstate-494501707223"
     key            = "eks-stack/karpenter/terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "state-locking-494501707223"
+    dynamodb_table = "tfstate-locking-494501707223"
   }
 }
 
