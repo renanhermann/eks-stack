@@ -1,17 +1,18 @@
+
 resource "aws_iam_role" "karpenter_controller" {
   name = var.karpenter.controller_role_name
 
   assume_role_policy = jsonencode({
     Statement = [{
-      Action = "sts:AssumeRoleWithWebIdentity"
       Effect = "Allow"
+      Action = "sts:AssumeRoleWithWebIdentity"
       Principal = {
         Federated = local.eks_oidc_arn
       }
       Condition = {
         StringEquals = {
-          "${local.eks_oidc_url}:aud" = "system:serviceaccount:karpenter:karpenter"
-          "${local.eks_oidc_url}:sub" = "system:serviceaccount:kube-system:karpenter"
+          "${local.eks_oidc_url}:aud" = "sts.amazonaws.com",
+          "${local.eks_oidc_url}:sub" = "system:serviceaccount:kube-system:karpenter",
         }
       }
     }]
@@ -19,9 +20,10 @@ resource "aws_iam_role" "karpenter_controller" {
   })
 }
 
-resource "aws_iam_policy" "karpenter_controller_policy" {
+resource "aws_iam_policy" "karpenter" {
   name        = var.karpenter.controller_policy_name
-  description = "IAM policy for Karpenter controller"
+  description = "IAM policy for Karpenter"
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -59,10 +61,14 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         }
       },
       {
-        Sid      = "PassNodeIAMRole"
-        Effect   = "Allow"
-        Action   = "iam:PassRole"
-        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KarpenterNodeRole-${local.eks_cluster}"
+        Sid    = "PassNodeIAMRole"
+        Effect = "Allow"
+        Action = "iam:PassRole"
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.karpenter_node_role_name}",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/eks-stack-node-group",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/eks-stack-cluster_*"
+        ]
       },
       {
         Sid      = "EKSClusterEndpointLookup"
@@ -71,9 +77,11 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         Resource = "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${local.eks_cluster}"
       },
       {
-        Sid      = "AllowScopedInstanceProfileCreationActions"
-        Effect   = "Allow"
-        Action   = ["iam:CreateInstanceProfile"]
+        Sid    = "AllowScopedInstanceProfileCreationActions"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateInstanceProfile"
+        ]
         Resource = "*"
         Condition = {
           StringEquals = {
@@ -86,9 +94,11 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         }
       },
       {
-        Sid      = "AllowScopedInstanceProfileTagActions"
-        Effect   = "Allow"
-        Action   = ["iam:TagInstanceProfile"]
+        Sid    = "AllowScopedInstanceProfileTagActions"
+        Effect = "Allow"
+        Action = [
+          "iam:TagInstanceProfile"
+        ]
         Resource = "*"
         Condition = {
           StringEquals = {
@@ -123,29 +133,19 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         }
       },
       {
-        Sid      = "AllowInstanceProfileReadActions"
-        Effect   = "Allow"
-        Action   = "iam:GetInstanceProfile"
-        Resource = "*"
-      },
-      {
-        Sid      = "AllowUnscopedInstanceProfileListAction"
-        Effect   = "Allow"
-        Action   = "iam:ListInstanceProfiles"
+        Sid    = "AllowInstanceProfileReadActions"
+        Effect = "Allow"
+        Action = [
+          "iam:GetInstanceProfile",
+          "iam:ListInstanceProfiles"
+        ]
         Resource = "*"
       }
     ]
   })
 }
 
-
-
-
-
-resource "aws_iam_role_policy_attachment" "karpenter_controller_policy" {
-  policy_arn = aws_iam_policy.karpenter_controller_policy.arn
+resource "aws_iam_role_policy_attachment" "karpenter_controller_custom_policy" {
+  policy_arn = aws_iam_policy.karpenter.arn
   role       = aws_iam_role.karpenter_controller.name
 }
-
-
-
