@@ -21,7 +21,7 @@ resource "helm_release" "aws_load_balancer_controller" {
     },
     {
       name  = "vpcId"
-    value = data.aws_vpc.this.id
+      value = data.aws_vpc.this.id
     },
 
     {
@@ -31,6 +31,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   depends_on = [
     aws_iam_role_policy_attachment.load_balancer_controller_AWSLoadBalancerControllerIAMRolePolicy,
+    aws_eks_node_group.this,
   ]
 
 }

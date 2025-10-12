@@ -3,6 +3,9 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   addon_name               = "aws-ebs-csi-driver"
   service_account_role_arn = aws_iam_role.container_storage_interface.arn
 
+  depends_on = [
+    aws_eks_node_group.this,
+  ]
 }
 
 resource "aws_iam_role" "container_storage_interface" {
